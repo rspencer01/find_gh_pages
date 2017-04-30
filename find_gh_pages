@@ -1,0 +1,35 @@
+#!/usr/bin/ruby
+
+require 'net/http'
+require 'json'
+
+if ARGV.length != 1 then
+  puts "Usage: find_gh_pages $USERNAME"
+  puts ""
+  puts "Note:  This does not use the new pages API endpoint and thus the url for the webpage may be wrong."
+  exit -1
+else
+  user = ARGV[0]
+end
+
+url = "https://api.github.com/users/#{user}/repos"
+uri = URI(url)
+response = Net::HTTP.get(uri)
+repositories = JSON.parse(response)
+
+printf("Github repositories for user #{user}\n\n")
+printf("%-30s| %-60s| %-60s|\n", "Repository name", "Repository URL", "Github pages URL")
+printf("-" * 30 + "|" + "-" * 61 + "|" + "-" * 61 + "|\n")
+repositories.each do |repo|
+  # I prefer symbols
+  repo = repo.inject({}){|memo,(k,v)|memo[k.to_sym]=v;memo}
+
+  if repo[:has_pages] then
+    ghpages = "https://#{user}.github.io/#{repo[:name]}"
+  else
+    ghpages = "-"
+  end
+
+  printf("%-30s| %-60s| %-60s|\n", repo[:name], repo[:html_url], ghpages)
+end
+
